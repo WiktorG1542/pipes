@@ -1073,14 +1073,14 @@ int canWeRunBlobLogic(block** game, int n, int m, int x, int y) {
     int unreachablesCount = isLeftUnreachable + isRightUnreachable + isDownUnreachable + isUpUnreachable;
 
     if (count>=2) {
-        activationHelper(game, n, m, x, y);
-        std::cout << "HERE\n";
+        //activationHelper(game, n, m, x, y);
+        //std::cout << "HERE\n";
         return 2;
     }
 
     if (isLeftUnreachable && isRightUnreachable && isDownUnreachable && isUpUnreachable) {
-        activationHelper(game, n, m, x, y);
-        std::cout << "THERE\n";
+        //activationHelper(game, n, m, x, y);
+        //std::cout << "THERE\n";
         return 2;
     }
 
@@ -1676,7 +1676,7 @@ int runSolverOnce(block** game, int n, int m) {
                     if (state==1) {
                         return 1;
                     } else if (state==2) {
-                        std::cout << "FOUND BLOB ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND BLOB ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].straight) {
@@ -1684,7 +1684,7 @@ int runSolverOnce(block** game, int n, int m) {
                     if (state==1) {
                         return 1;
                     } else if (state==2) {
-                        std::cout << "FOUND STRAIGHT ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND STRAIGHT ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].Tshape) {
@@ -1692,7 +1692,7 @@ int runSolverOnce(block** game, int n, int m) {
                     if (state==1) {
                         return 1;
                     } else if (state==2) {
-                        std::cout << "FOUND TSHAPE ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND TSHAPE ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].Lshape) {
@@ -1700,7 +1700,7 @@ int runSolverOnce(block** game, int n, int m) {
                     if (state==1) {
                         return 1;
                     } else if (state==2) {
-                        std::cout << "FOUND LSHAPE ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND LSHAPE ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 }
@@ -1708,22 +1708,22 @@ int runSolverOnce(block** game, int n, int m) {
                 //current block is locked
                 if (game[a][b].blob) {
                     if (canWeRunBlobLogic(game, n, m, a, b)==2) {
-                        std::cout << "FOUND LOCKED BLOB ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND LOCKED BLOB ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].straight) {
                     if (canWeRunStraightLogic(game, n, m, a, b)==2) {
-                        std::cout << "FOUND LOCKED STRAIGHT ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND LOCKED STRAIGHT ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].Tshape) {
                     if (canWeRunTshapeLogic(game, n, m, a, b)==2) {
-                        std::cout << "FOUND LOCKED TSHAPE ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND LOCKED TSHAPE ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 } else if (game[a][b].Lshape) {
                     if (canWeRunLshapeLogic(game, n, m, a, b)==2) {
-                        std::cout << "FOUND LOCKED LSHAPE ERROR AT " << a << " " << b << "\n";
+                        //std::cout << "FOUND LOCKED LSHAPE ERROR AT " << a << " " << b << "\n";
                         return 2;
                     }
                 }
@@ -1840,7 +1840,68 @@ void draw(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX
 
 }
 
+bool doWeBreakEarly(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs) {
+
+    //clear all activity
+    for (int a=0; a<n; a++) {
+        for (int b=0; b<m; b++) {
+            game[a][b].active = false;
+        }
+    }
+
+    //activate water on all locked blocks, which have at least one unlocked neighbour
+    for (int a=0; a<n; a++) {
+        for (int b=0; b<m; b++) {
+            if (game[a][b].locked==true) {
+
+                bool doesItHaveAtLeastOneUnlockedNeighbour = false;
+                if (a-1>=0) {
+                    if (game[a-1][b].locked==false) {
+                        doesItHaveAtLeastOneUnlockedNeighbour = true;
+                    }
+                }
+                if (b-1>=0) {
+                    if (game[a][b-1].locked==false) {
+                        doesItHaveAtLeastOneUnlockedNeighbour = true;
+                    }
+                }
+                if (a+1<n) {
+                    if (game[a+1][b].locked==false) {
+                        doesItHaveAtLeastOneUnlockedNeighbour = true;
+                    }
+                }
+                if (b+1<m) {
+                    if (game[a][b+1].locked==false) {
+                        doesItHaveAtLeastOneUnlockedNeighbour = true;
+                    }
+                }
+
+                if (doesItHaveAtLeastOneUnlockedNeighbour) {
+                    activateWater(game, n, m, a, b);
+                }
+            }
+        }
+    }
+
+    //if there is a locked block without water, then we have to break early
+    for (int a=0; a<n; a++) {
+        for (int b=0; b<m; b++) {
+            if (game[a][b].locked==true && game[a][b].active==false) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs) {
+
+    //first check if we have to break early
+    if (doWeBreakEarly(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
+        //std::cout << "BREAKING EARLY BREAKING EARLY BREAKING EARLY \n";
+        return false;
+    }
 
     bool doWeContinue = true;
 
@@ -1902,6 +1963,12 @@ bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, in
 
             }
 
+            //first check if we have to break early
+            if (doWeBreakEarly(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
+                //std::cout << "BREAKING EARLY BREAKING EARLY BREAKING EARLY \n";
+                return false;
+            }
+
             //reset water
             for (int a=0; a<n; a++) {
                 for (int b=0; b<m; b++) {
@@ -1961,8 +2028,6 @@ bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, in
         draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
     }
-
-    std::cout << "finished le solving...\n";
 
     return true;
 
@@ -2211,8 +2276,8 @@ int main(int argc, char* argv[]) {
                     if (game[a][b].locked==false) {
                         rotate(game, a, b);
                     }
-                    activationHelper(game, n, m, a, b);
-                    std::cout << "the block you just clicked at: ("<<a<<", "<<b<<") has a rotation of: " << game[a][b].rotation << "\n\n\n";
+                    //activationHelper(game, n, m, a, b);
+                    //std::cout << "the block you just clicked at: ("<<a<<", "<<b<<") has a rotation of: " << game[a][b].rotation << "\n\n\n";
                 }
                 
             } else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Right) {
@@ -2240,7 +2305,8 @@ int main(int argc, char* argv[]) {
                 waterOriginY = std::rand()%m;
                 // std::cout << "activating water at " << waterOriginX << ", " << waterOriginY << "\n";
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
-                std::cout << "Le Solving\n";
+                std::cout << "Solving...\n";
+                auto start = std::chrono::steady_clock::now();
                 for (int a=0; a<maxAnswerSize; a++) {
                     for (int b=0; b<maxAnswerSize; b++) {
                         rotations[a][b] = 0;
@@ -2253,6 +2319,9 @@ int main(int argc, char* argv[]) {
                         game[a][b].locked = true;
                     }
                 }
+                auto end = std::chrono::steady_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+                std::cout << "Solved in: " << duration << " milliseconds" << std::endl;
             }
         }
 
