@@ -105,6 +105,8 @@ Here are the options so far:
  puzzle that took the longest out of all of them to solve to the `puzzle.txt` file. It will
  also display times, and some time statistics to the terminal. 
 
+> Note: If you run tests with a number of tests smaller than 10, you will get a segFault.
+
 ## Warning
 
 **IMPORTANT NOTE** - sometimes, especially with large puzzles (50x50 and above) the randomly

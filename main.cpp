@@ -10,8 +10,6 @@
 #include<thread>
 #include <fstream> // Include the necessary header for file I/O
 
-const int textureSize = 32;
-const int maxAnswerSize = 100;
 const int textureSize = 8;
 const int maxAnswerSize = 200;
 
