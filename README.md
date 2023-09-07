@@ -97,13 +97,17 @@ Here are the options so far:
  solved, whereas the *prims* maze will still have a long way to go (only works well on larger
  (`25x25` and above puzzles)).
  * **W** - writes the current puzzle to the `puzzle.txt` file. This lets you save puzzles.
- * **R** - reads the current puzzle from the `puzzle.txt file`. This lets you try puzzles
+ * **R** - reads the current puzzle from the `puzzle.txt` file. This lets you try puzzles
  you have saved. Only works if the current size of the game, and the size of the saved
  puzzle match.
  * **T** - conduct tests. You will be prompted in the terminal for the number of tests you
  want to run. Then the game will *fast-solve* the number of tests you inputted, and save the
  puzzle that took the longest out of all of them to solve to the `puzzle.txt` file. It will
  also display times, and some time statistics to the terminal. 
+ * **I** - toggle `DisplayInfo`. When it is on, you will see additional info, mainly:
+  - the current `recursionDepth` in the top left of the window
+  - statistics about how many times we were at each recursion depth in the terminal
+  - and how many times we successfully "broke early", aka pruned the backtracking search tree.
 
 > Note: If you run tests with a number of tests smaller than 10, you will get a segFault.
 
@@ -113,6 +117,17 @@ Here are the options so far:
 generated puzzle will be so difficult, that it will cause your computer to freeze. It may be
 because my computer is slow, but take this as a warning - dont have anything important running
 on your computer when testing large puzzles.
+
+In order to investigate this further, I have added the `latest_puzzle.txt` file. When you run tests
+by pressing **T** on the keyboard, before the program starts solving the next puzzle it always saves
+it to that file beforehand, so that if it crashes, when you reboot you will still have the access to
+the puzzle that caused the crash. You can then copy it to the `puzzle.txt` file like this:
+
+```
+cat latest_puzzle.txt > puzzle.txt
+```
+
+in order to start investigating the crash.
 
 ## What's Next?
 
