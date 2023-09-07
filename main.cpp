@@ -1,24 +1,14 @@
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <string>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <vector>
-#include <string>
+#include<SFML/Graphics.hpp>
+#include<iostream>
+#include<string>
+#include<cmath>
+#include<cstdlib>
+#include<ctime>
+#include<vector>
+#include<string>
 #include<chrono>
 #include<thread>
-#include <fstream> // Include the necessary header for file I/O
-
-const int textureSize = 8;
-const int maxAnswerSize = 200;
-
-std::vector<int> recursionInfo;
-int depthOfRecursion = 0;
-
-int timesBrokenEarlyBecauseOfCycle = 0;
-
-int rotations[maxAnswerSize][maxAnswerSize];
+#include<fstream>
 
 struct allSprites {
     sf::Texture blobTexture;
@@ -93,8 +83,8 @@ struct block {
 
 };
 
-void writeCurrentPuzzleToFile(block** game, int n, int m) {
-    std::ofstream outFile("puzzle.txt"); // Open the file in write mode
+void writeCurrentPuzzleToFile(const std::string& filePath, block** game, int n, int m) {
+    std::ofstream outFile(filePath); // Open the file in write mode
     if (!outFile.is_open()) {
         std::cout << "Error opening the file for writing." << std::endl;
         return;
@@ -122,8 +112,8 @@ void writeCurrentPuzzleToFile(block** game, int n, int m) {
     outFile.close(); // Close the file after writing
 }
 
-void readPuzzleFromFile(block**& game, int& n, int& m) {
-    std::ifstream inFile("puzzle.txt"); // Open the file in read mode
+void readPuzzleFromFile(const std::string& filePath, block**& game, int& n, int& m) {
+    std::ifstream inFile(filePath); // Open the file in read mode
     if (!inFile.is_open()) {
         std::cout << "Error opening the file for reading." << std::endl;
         return;
@@ -132,23 +122,10 @@ void readPuzzleFromFile(block**& game, int& n, int& m) {
     int a, b;
     // Read the dimensions of the puzzle (n and m) from the file
     inFile >> a >> b;
-    if (a!=n || b!=m) {
+    if (a != n || b != m) {
         std::cout << "READING FAILED, you currently have a " << n << "x" << m << " puzzle,\n";
         std::cout << " but you are trying to read a " << a << "x" << b << " puzzle\n";
         return;
-    }
-
-    // Resize the game array if necessary
-    if (game != nullptr) {
-        for (int i = 0; i < n; i++) {
-            delete[] game[i];
-        }
-        delete[] game;
-    }
-
-    game = new block*[n];
-    for (int i = 0; i < n; ++i) {
-        game[i] = new block[m];
     }
 
     // Read the puzzle configuration from the file and update the game array
@@ -162,7 +139,7 @@ void readPuzzleFromFile(block**& game, int& n, int& m) {
             game[a][b].Lshape = (blockType == 'l');
             game[a][b].Tshape = (blockType == 't');
             game[a][b].locked = false; // Reset the locked status when loading the puzzle
-            game[a][b].rotation = 0; // Reset the rotation when loading the puzzle
+            game[a][b].rotation = 0;  // Reset the rotation when loading the puzzle
         }
     }
 
@@ -1041,7 +1018,7 @@ void activityOfThisBlock(block** game, int n, int m, int x, int y) {
 
 sf::Sprite makeSprite(const sf::Texture& texture, int squareSize) {
     sf::Sprite sprite(texture);
-    sprite.setScale(squareSize/textureSize, squareSize/textureSize);
+    sprite.setScale(squareSize/8, squareSize/8);
     return sprite;
 }
 
@@ -1829,7 +1806,7 @@ int runSolverOnce(block** game, int n, int m) {
 
 }
 
-void draw(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize) {
+void draw(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, bool doWeDisplayInfo, int depthOfRecursion) {
 
     window.clear();
 
@@ -1923,21 +1900,23 @@ void draw(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX
             // Set the position of the sprite based on the block's position
             sprite.setPosition(i * squareSize + squareSize / 2.f, j * squareSize + squareSize / 2.f);
             // Set the origin of the sprite to its center
-            sprite.setOrigin(textureSize / 2.f, textureSize / 2.f);
+            sprite.setOrigin(8 / 2.f, 8 / 2.f);
             // Set the rotation of the sprite based on the block's rotation
             sprite.setRotation(game[i][j].rotation * 90);
             window.draw(sprite);
         }
     }
 
-    // sf::Text depthText;
-    // depthText.setFont(sprites.font);
-    // depthText.setString("Depth of Recursion: " + std::to_string(depthOfRecursion));
-    // depthText.setCharacterSize(24);
-    // depthText.setFillColor(sf::Color::Red);
-    // depthText.setPosition(10, 10); // Adjust position as needed
+    if (doWeDisplayInfo) {
+        sf::Text depthText;
+        depthText.setFont(sprites.font);
+        depthText.setString("Depth of Recursion: " + std::to_string(depthOfRecursion));
+        depthText.setCharacterSize(24);
+        depthText.setFillColor(sf::Color::Red);
+        depthText.setPosition(10, 10); // Adjust position as needed
 
-    // window.draw(depthText);
+        window.draw(depthText);
+    }
 
     window.display();
 
@@ -2015,7 +1994,7 @@ void drawWithoutWater(block** game, int n, int m, sf::RenderWindow& window, int 
             // Set the position of the sprite based on the block's position
             sprite.setPosition(i * squareSize + squareSize / 2.f, j * squareSize + squareSize / 2.f);
             // Set the origin of the sprite to its center
-            sprite.setOrigin(textureSize / 2.f, textureSize / 2.f);
+            sprite.setOrigin(8 / 2.f, 8 / 2.f);
             // Set the rotation of the sprite based on the block's rotation
             sprite.setRotation(game[i][j].rotation * 90);
             window.draw(sprite);
@@ -2625,7 +2604,7 @@ bool isThereACycleInTheLockedBlocks(block** game, int n, int m, sf::RenderWindow
 
 }
 
-bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs, bool doWeRender) {
+bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs, bool doWeRender, std::vector<int>& recursionInfo, int& depthOfRecursion, int& timesBrokenEarlyBecauseOfCycle, bool doWeDisplayInfo) {
 
     depthOfRecursion++;
     while (depthOfRecursion>recursionInfo.size()) {
@@ -2697,11 +2676,11 @@ bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, in
                 if (isEveryThingActive) {
                     //then it is solved
                     if (doWeRender) {
-                        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+                        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, doWeDisplayInfo, depthOfRecursion);
                     }
                     for (int a=0; a<n; a++) {
                         for (int b=0; b<m; b++) {
-                            rotations[a][b] = game[a][b].rotation;
+                            solution[a][b] = game[a][b].rotation;
                         }
                     }
                     return true;
@@ -2788,28 +2767,28 @@ bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, in
             copyFirstGameToSecondGame(game, copyOfGame, n, m);
             copyOfGame[chosenX][chosenY].rotation = 0;
             copyOfGame[chosenX][chosenY].locked = true;
-            if (backtrackingSolver(copyOfGame, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender)) {
+            if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
                 return true;
             }
 
             copyFirstGameToSecondGame(game, copyOfGame, n, m);
             copyOfGame[chosenX][chosenY].rotation = 1;
             copyOfGame[chosenX][chosenY].locked = true;
-            if (backtrackingSolver(copyOfGame, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender)) {
+            if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
                 return true;
             }
 
             copyFirstGameToSecondGame(game, copyOfGame, n, m);
             copyOfGame[chosenX][chosenY].rotation = 2;
             copyOfGame[chosenX][chosenY].locked = true;
-            if (backtrackingSolver(copyOfGame, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender)) {
+            if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
                 return true;
             }
 
             copyFirstGameToSecondGame(game, copyOfGame, n, m);
             copyOfGame[chosenX][chosenY].rotation = 3;
             copyOfGame[chosenX][chosenY].locked = true;
-            if (backtrackingSolver(copyOfGame, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender)) {
+            if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
                 return true;
             }
 
@@ -2818,7 +2797,7 @@ bool backtrackingSolver(block** game, int n, int m, sf::RenderWindow& window, in
         }
 
         if (doWeRender) {
-            draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+            draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, doWeDisplayInfo, depthOfRecursion);
         }
         
         if (doWeRender) {
@@ -2864,6 +2843,12 @@ int main(int argc, char* argv[]) {
         std::cout << "too big square size\n";
         return -1;
     }
+
+    bool doWeDisplayInfo = false;
+    std::cout << "Displaying info is now OFF\n";
+    std::vector<int> recursionInfo;
+    int depthOfRecursion = 0;
+    int timesBrokenEarlyBecauseOfCycle = 0;
 
     sf::RenderWindow window(sf::VideoMode(n * squareSize, m * squareSize), "Pipes Game");
 
@@ -3134,52 +3119,69 @@ int main(int argc, char* argv[]) {
                 recursionInfo.clear();
                 depthOfRecursion = 0;
                 auto start = std::chrono::steady_clock::now();
-                for (int a=0; a<maxAnswerSize; a++) {
-                    for (int b=0; b<maxAnswerSize; b++) {
-                        rotations[a][b] = 0;
+                int solution[200][200];
+                for (int a=0; a<200; a++) {
+                    for (int b=0; b<200; b++) {
+                        solution[a][b] = 0;
                     }
                 }
+
                 timesBrokenEarlyBecauseOfCycle = 0;
-                backtrackingSolver(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 1);
+                recursionInfo.clear();
+                depthOfRecursion = 0;
+
+                backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 1, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo);
                 for (int a=0; a<n; a++) {
                     for (int b=0; b<m; b++) {
-                        game[a][b].rotation = rotations[a][b];
+                        game[a][b].rotation = solution[a][b];
                         game[a][b].locked = true;
                     }
                 }
                 auto end = std::chrono::steady_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-                std::cout << "recursionInfo:\n";
-                for (int a=0; a<recursionInfo.size(); a++) {
-                    std::cout << "recursionInfo("<<a<<"): " << recursionInfo[a] << "\n";
+                
+                if (doWeDisplayInfo) {
+                    std::cout << "recursionInfo:\n";
+                    for (int a=0; a<recursionInfo.size(); a++) {
+                        std::cout << "recursionInfo("<<a<<"): " << recursionInfo[a] << "\n";
+                    }
+                    std::cout << "times broken early because of locked cycle: " << timesBrokenEarlyBecauseOfCycle << "\n";
                 }
-                std::cout << "times broken early because of locked cycle: " << timesBrokenEarlyBecauseOfCycle << "\n";
+                
                 std::cout << "solved in: " << duration << " milliseconds" << std::endl;
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F) {
                 std::cout << "FAST solving...\n";
                 recursionInfo.clear();
+
                 depthOfRecursion = 0;
+                recursionInfo.clear();
                 timesBrokenEarlyBecauseOfCycle = 0;
+
                 auto start = std::chrono::steady_clock::now();
-                for (int a=0; a<maxAnswerSize; a++) {
-                    for (int b=0; b<maxAnswerSize; b++) {
-                        rotations[a][b] = 0;
+                int solution[200][200];
+                for (int a=0; a<200; a++) {
+                    for (int b=0; b<200; b++) {
+                        solution[a][b] = 0;
                     }
                 }
-                backtrackingSolver(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 0);
+                backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 0, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo);
                 for (int a=0; a<n; a++) {
                     for (int b=0; b<m; b++) {
-                        game[a][b].rotation = rotations[a][b];
+                        game[a][b].rotation = solution[a][b];
                         game[a][b].locked = true;
                     }
                 }
                 auto end = std::chrono::steady_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-                std::cout << "recursionInfo:\n";
-                for (int a=0; a<recursionInfo.size(); a++) {
-                    std::cout << "recursionInfo("<<a<<"): " << recursionInfo[a] << "\n";
+                
+                if (doWeDisplayInfo) {
+                    std::cout << "recursionInfo:\n";
+                    for (int a=0; a<recursionInfo.size(); a++) {
+                        std::cout << "recursionInfo("<<a<<"): " << recursionInfo[a] << "\n";
+                    }
+                    std::cout << "times broken early because of locked cycle: " << timesBrokenEarlyBecauseOfCycle << "\n";
                 }
-                std::cout << "times broken early because of locked cycle: " << timesBrokenEarlyBecauseOfCycle << "\n";
+
                 std::cout << "FAST solved in: " << duration << " milliseconds" << std::endl;
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U) {
                 std::cout << "unlocking everything and scrambling...\n";
@@ -3206,11 +3208,11 @@ int main(int argc, char* argv[]) {
                 // chooseBacktrackingSquare(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, chosenX, chosenY);
                 // std::cout << "we will start backtracking on " << chosenX << " " << chosenY << "\n";
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W) {
-                std::cout << "Writing current puzzle to file...\n";
-                writeCurrentPuzzleToFile(game, n, m);
+                std::cout << "Writing current puzzle to puzzle.txt...\n";
+                writeCurrentPuzzleToFile("puzzle.txt" ,game, n, m);
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
-                std::cout << "Reading puzzle from file...\n";
-                readPuzzleFromFile(game, n, m);
+                std::cout << "Reading puzzle from puzzle.txt...\n";
+                readPuzzleFromFile("puzzle.txt", game, n, m);
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::T) {
                 std::cout << "input the number of tests you want to conduct...\n";
                 int numberOfTests;
@@ -3227,20 +3229,28 @@ int main(int argc, char* argv[]) {
                     waterOriginX = std::rand()%n;
                     waterOriginY = std::rand()%m;
 
+                    //before we solve it, remember - it might crash the computer, so save it first,
+                    //so that later we can find out why it crashed.
+                    writeCurrentPuzzleToFile("latest_puzzle.txt", game, n, m);
+
                     //solve it
                     recursionInfo.clear();
+
                     depthOfRecursion = 0;
+                    recursionInfo.clear();
                     timesBrokenEarlyBecauseOfCycle = 0;
+                    
                     auto start = std::chrono::steady_clock::now();
-                    for (int a=0; a<maxAnswerSize; a++) {
-                        for (int b=0; b<maxAnswerSize; b++) {
-                            rotations[a][b] = 0;
+                    int solution[200][200];
+                    for (int a=0; a<200; a++) {
+                        for (int b=0; b<200; b++) {
+                            solution[a][b] = 0;
                         }
                     }
-                    backtrackingSolver(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 0);
+                    backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 0, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo);
                     for (int a=0; a<n; a++) {
                         for (int b=0; b<m; b++) {
-                            game[a][b].rotation = rotations[a][b];
+                            game[a][b].rotation = solution[a][b];
                             game[a][b].locked = true;
                         }
                     }
@@ -3248,11 +3258,11 @@ int main(int argc, char* argv[]) {
                     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
                     
                     //draw and handle the statistics
-                    draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+                    draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, doWeDisplayInfo, -1);
                     totalDuration += duration;
                     if (duration>longestDuration) {
                         //we have a new game, that took the longest to solve
-                        writeCurrentPuzzleToFile(game, n, m);
+                        writeCurrentPuzzleToFile("puzzle.txt" ,game, n, m);
                         longestDuration = duration;
                     }
 
@@ -3268,11 +3278,18 @@ int main(int argc, char* argv[]) {
                 std::cout << "longest duration: " << longestDuration << "\n";
                 std::cout << "highest average of ten: " << highestAverageOfTen(allTimes) << "\n";
 
+            } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::I) {
+                doWeDisplayInfo = !doWeDisplayInfo;
+                if (doWeDisplayInfo) {
+                    std::cout << "Displaying info is now ON\n";
+                } else {
+                    std::cout << "Displaying info is now OFF\n";
+                }
             }
         }
 
         
-        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, doWeDisplayInfo, -1);
 
         
     }
