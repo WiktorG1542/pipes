@@ -2768,6 +2768,10 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
             copyOfGame[chosenX][chosenY].rotation = 0;
             copyOfGame[chosenX][chosenY].locked = true;
             if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
+                for (int i = 0; i < n; ++i) {
+                    delete[] copyOfGame[i];
+                }
+                delete[] copyOfGame;
                 return true;
             }
 
@@ -2775,6 +2779,10 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
             copyOfGame[chosenX][chosenY].rotation = 1;
             copyOfGame[chosenX][chosenY].locked = true;
             if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
+                for (int i = 0; i < n; ++i) {
+                    delete[] copyOfGame[i];
+                }
+                delete[] copyOfGame;
                 return true;
             }
 
@@ -2782,6 +2790,10 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
             copyOfGame[chosenX][chosenY].rotation = 2;
             copyOfGame[chosenX][chosenY].locked = true;
             if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
+                for (int i = 0; i < n; ++i) {
+                    delete[] copyOfGame[i];
+                }
+                delete[] copyOfGame;
                 return true;
             }
 
@@ -2789,10 +2801,18 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
             copyOfGame[chosenX][chosenY].rotation = 3;
             copyOfGame[chosenX][chosenY].locked = true;
             if (backtrackingSolver(copyOfGame, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, doWeRender, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo)) {
+                for (int i = 0; i < n; ++i) {
+                    delete[] copyOfGame[i];
+                }
+                delete[] copyOfGame;
                 return true;
             }
 
             depthOfRecursion--;
+            for (int i = 0; i < n; ++i) {
+                delete[] copyOfGame[i];
+            }
+            delete[] copyOfGame;
             return false;
         }
 
@@ -2801,7 +2821,7 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
         }
         
         if (doWeRender) {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
+            std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
         }
     }
 
@@ -2830,29 +2850,13 @@ int highestAverageOfTen(std::vector<int> times) {
 
 int main(int argc, char* argv[]) {
 
-    // Seed the random number generator
-    std::srand(std::time(nullptr));
-
-    int n = std::stoi(argv[1]);
-    int m = std::stoi(argv[2]);
-    int squareSize = std::stoi(argv[3]);
-    int delayMs = std::stoi(argv[4]);
-
-
-    if (squareSize>128) {
-        std::cout << "too big square size\n";
-        return -1;
+    int squareSize;
+    if (argc>=4) {
+        squareSize = std::stoi(argv[3]);
+    } else {
+        squareSize = 8;
     }
 
-    bool doWeDisplayInfo = false;
-    std::cout << "Displaying info is now OFF\n";
-    std::vector<int> recursionInfo;
-    int depthOfRecursion = 0;
-    int timesBrokenEarlyBecauseOfCycle = 0;
-
-    sf::RenderWindow window(sf::VideoMode(n * squareSize, m * squareSize), "Pipes Game");
-
-    //sprites
     allSprites sprites;
 
     if (!sprites.font.loadFromFile("sprites/Roboto-Black.ttf")) {
@@ -3033,6 +3037,85 @@ int main(int argc, char* argv[]) {
     sprites.TshapeActiveLockedSprite = TshapeActiveLockedSprite;
     sprites.TshapeActiveLockedTexture = TshapeActiveLockedTexture;
 
+    // Seed the random number generator
+    std::srand(std::time(nullptr));
+
+    if (argc==3 && std::string(argv[1])=="TEST") {
+        
+        std::string pathToPuzzle = std::string(argv[2]);
+
+        std::ifstream inFile(pathToPuzzle); // Open the file in read mode
+        if (!inFile.is_open()) {
+            std::cout << "Error opening the file for testing." << std::endl;
+            return -1;
+        }
+
+        int n, m;
+        // Read the dimensions of the puzzle (n and m) from the file
+        inFile >> n >> m;
+
+        inFile.close(); // Close the file after reading
+
+        //initialize the array of pieces;
+        block** game = new block*[n];
+        for (int i = 0; i < n; ++i) {
+            game[i] = new block[m];
+        }
+
+        //choose the origin point of water flow
+        int waterOriginX = std::rand()%n;
+        int waterOriginY = std::rand()%m;
+
+        readPuzzleFromFile(pathToPuzzle, game, n, m);
+
+        sf::RenderWindow window(sf::VideoMode(n * 8, m * 8), "Pipes Game");
+
+        std::vector<int> recursionInfo;
+        recursionInfo.clear();
+
+        int depthOfRecursion = 0;
+        recursionInfo.clear();
+        int timesBrokenEarlyBecauseOfCycle = 0;
+
+        auto start = std::chrono::steady_clock::now();
+        int solution[200][200];
+        for (int a=0; a<200; a++) {
+            for (int b=0; b<200; b++) {
+                solution[a][b] = 0;
+            }
+        }
+        backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, 0, 0, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, 0);
+        for (int a=0; a<n; a++) {
+            for (int b=0; b<m; b++) {
+                game[a][b].rotation = solution[a][b];
+                game[a][b].locked = true;
+            }
+        }
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        
+        std::cout << duration << std::endl;
+
+        return 0;
+    }
+
+    int n = std::stoi(argv[1]);
+    int m = std::stoi(argv[2]);
+    int delayMs = std::stoi(argv[4]);
+
+
+    if (squareSize>128) {
+        std::cout << "too big square size\n";
+        return -1;
+    }
+
+    bool doWeDisplayInfo = false;
+    std::cout << "Displaying info is now OFF\n";
+    std::vector<int> recursionInfo;
+    int depthOfRecursion = 0;
+    int timesBrokenEarlyBecauseOfCycle = 0;
+
+    sf::RenderWindow window(sf::VideoMode(n * squareSize, m * squareSize), "Pipes Game");
 
     //initialize the array of pieces;
     block** game = new block*[n];
@@ -3277,6 +3360,27 @@ int main(int argc, char* argv[]) {
                 std::cout << "average duration: " << totalDuration/numberOfTests << "\n";
                 std::cout << "longest duration: " << longestDuration << "\n";
                 std::cout << "highest average of ten: " << highestAverageOfTen(allTimes) << "\n";
+
+                if (doWeDisplayInfo) {
+                    std::cout << "Display info was on when running the tests - are you sure you want to save all times to times.txt?\n";
+                    char answer;
+                    std::cin >> answer;
+                    if (answer=='Y' || answer=='y') {
+                        // Save the vector to a file named "times.txt"
+                        std::ofstream outputFile("times.txt");
+                        if (outputFile.is_open()) {
+                            for (const double& time : allTimes) {
+                                outputFile << time << "\n";
+                            }
+                            outputFile.close();
+                            std::cout << "times saved to times.txt\n";
+                        } else {
+                            std::cerr << "Unable to open times.txt for writing.\n";
+                        }
+                    } else {
+                        std::cout << "ok, not saving the times\n";
+                    }
+                }
 
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::I) {
                 doWeDisplayInfo = !doWeDisplayInfo;

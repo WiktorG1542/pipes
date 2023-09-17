@@ -111,6 +111,11 @@ Here are the options so far:
 
 > Note: If you run tests with a number of tests smaller than 10, you will get a segFault.
 
+> Another note: If you run tests with `DisplayInfo` on, you will be prompted whether
+you want to save all of the times to `times.txt`. I have added this to be able to
+store, and later visualize the times better (for example by passing that file to
+another program, that makes it into a histogram).
+
 ## Warning
 
 **IMPORTANT NOTE** - sometimes, especially with large puzzles (50x50 and above) the randomly
@@ -129,6 +134,11 @@ cat latest_puzzle.txt > puzzle.txt
 
 in order to start investigating the crash.
 
+> Note: This has just been fixed :heart_eyes_cat:. The crashing was due to a significat memory
+leak, that I have since fixed. The `latest_puzzle.txt` functionality will
+still stay though - I think its a neat concept, especially if I ever run
+into some crashes again.
+
 ## What's Next?
 
 This is what I want to add next:
@@ -143,3 +153,23 @@ This is what I want to add next:
  in the `main.cpp` file - I have already been playing around with some strategies.
  * **ADD MULTITHREADING** - In order to improve the times, it would be nice to add
  multithreading somehow, although I don't yet know how to tackle that.
+
+> Note: automated tests have been added. Just run the tests like this:
+>
+> ```
+> wiktor in ~/Desktop/pipes on main ● ● λ ./run_tests.sh tests/25x25suite
+>successfully ran tests/25x25suite/1 in 363 seconds.
+>successfully ran tests/25x25suite/2 in 306 seconds.
+>successfully ran tests/25x25suite/3 in 270 seconds.
+>successfully ran tests/25x25suite/4 in 238 seconds.
+>successfully ran tests/25x25suite/5 in 2673 seconds.
+>successfully ran tests/25x25suite/6 in 474 seconds.
+>successfully ran tests/25x25suite/7 in 548 seconds.
+>successfully ran tests/25x25suite/8 in 228 seconds.
+>successfully ran tests/25x25suite/9 in 1168 seconds.
+>Ran 9 number of tests.
+>Average time per test: 696
+>wiktor in ~/Desktop/pipes on main ● ● λ 
+> ```
+> Now the improving of the algorithm can begin :exclamation: :exclamation:
+> (I really dont want to deal with :japanese_goblin: `Cmake` :japanese_goblin: for now)
