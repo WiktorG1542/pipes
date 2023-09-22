@@ -3084,6 +3084,9 @@ int main(int argc, char* argv[]) {
                 solution[a][b] = 0;
             }
         }
+
+        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, 8, 0, depthOfRecursion);
+
         backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, 0, 0, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, 0);
         for (int a=0; a<n; a++) {
             for (int b=0; b<m; b++) {
@@ -3094,6 +3097,8 @@ int main(int argc, char* argv[]) {
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         
+        draw(game, n, m, window, waterOriginX, waterOriginY, sprites, 8, 0, depthOfRecursion);
+
         std::cout << duration << std::endl;
 
         return 0;
