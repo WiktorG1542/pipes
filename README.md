@@ -6,7 +6,7 @@
 - [Installation](#installation)
 - [How to run](#how-to-run)
 - [Basic Showcase](#basic-showcase)
-- [Warning](#warning)
+- [Tests](#Tests)
 - [What's Next?](#whats-next)
 
 ## Installation
@@ -58,13 +58,15 @@ so for example this command:
 ./game 35 35 8 0
 ```
 
-will generate a medium-sized puzzle that will get solved quickly, whereas this command:
+will generate a medium-sized puzzle (with small-sized sprites) that will
+get solved quickly, whereas this command:
 
 ```
 ./game 15 15 64 48
 ```
 
-will generate a small puzzle, that will take its time between showing you each move.
+will generate a small puzzle (with big sprites), that will take its
+time between showing you each move.
 
 ## Basic Showcase
 
@@ -91,6 +93,8 @@ Here are the options so far:
 
 ### More advanced keyboard options
 
+ * **O** - stops the solver, so that you can get a good look at the board. Press
+ **O** again to start the solver again, where it left off.
  * **X** - solves all *obvious* squares - the squares that don't require any backtracking.
  You can see this very well when generating a *dfs* maze and pressing **x**, and compare
  that to generating a *prim's* maze then pressing **x** - the *dfs* maze will be almost fully
@@ -105,9 +109,16 @@ Here are the options so far:
  puzzle that took the longest out of all of them to solve to the `puzzle.txt` file. It will
  also display times, and some time statistics to the terminal. 
  * **I** - toggle `DisplayInfo`. When it is on, you will see additional info, mainly:
-  - the current `recursionDepth` in the top left of the window
-  - statistics about how many times we were at each recursion depth in the terminal
-  - and how many times we successfully "broke early", aka pruned the backtracking search tree.
+    - the current `recursionDepth` in the top left of the window
+    - statistics about how many times we were at each recursion depth in the terminal
+    - and how many times we successfully "broke early", aka pruned the backtracking search tree.
+ * **V** - you will get prompted for the amount of tests you want to save, and for the time.
+ So if you enter for example `100ms` as the time, and `20` as the number of tests, then the
+ solver will keep generating new puzzles, until it finds 20 that take longer than 100ms. All
+ the puzzles will get saved to `tests/random`. That way, you can make your own test suite.
+ For example, if you run `./game 25 25 24 0` and then press **V** and enter `1000` as the time,
+ and `100` as the number of tests, you will end up with a hard test suite. If you were to enter
+ `0` as the time instead, you would get 100 random puzzles saved to `tests/random`.
 
 > Note: If you run tests with a number of tests smaller than 10, you will get a segFault.
 
@@ -116,60 +127,45 @@ you want to save all of the times to `times.txt`. I have added this to be able t
 store, and later visualize the times better (for example by passing that file to
 another program, that makes it into a histogram).
 
-## Warning
+## Tests
 
-**IMPORTANT NOTE** - sometimes, especially with large puzzles (50x50 and above) the randomly
-generated puzzle will be so difficult, that it will cause your computer to freeze. It may be
-because my computer is slow, but take this as a warning - dont have anything important running
-on your computer when testing large puzzles.
-
-In order to investigate this further, I have added the `latest_puzzle.txt` file. When you run tests
-by pressing **T** on the keyboard, before the program starts solving the next puzzle it always saves
-it to that file beforehand, so that if it crashes, when you reboot you will still have the access to
-the puzzle that caused the crash. You can then copy it to the `puzzle.txt` file like this:
+In the `tests/` directory you will find various puzzles, stored in the same
+format as `puzzle.txt`. You can run tests like this:
 
 ```
-cat latest_puzzle.txt > puzzle.txt
+wiktor in ~/Desktop/pipes on main ● ● λ ./run_tests.sh tests/25x25suite
+successfully ran tests/25x25suite/1 in 363 seconds.
+successfully ran tests/25x25suite/2 in 306 seconds.
+successfully ran tests/25x25suite/3 in 270 seconds.
+successfully ran tests/25x25suite/4 in 238 seconds.
+successfully ran tests/25x25suite/5 in 2673 seconds.
+successfully ran tests/25x25suite/6 in 474 seconds.
+successfully ran tests/25x25suite/7 in 548 seconds.
+successfully ran tests/25x25suite/8 in 228 seconds.
+successfully ran tests/25x25suite/9 in 1168 seconds.
+Ran 9 number of tests.
+Average time per test: 696
+wiktor in ~/Desktop/pipes on main ● ● λ 
 ```
 
-in order to start investigating the crash.
-
-> Note: This has just been fixed :heart_eyes_cat:. The crashing was due to a significat memory
-leak, that I have since fixed. The `latest_puzzle.txt` functionality will
-still stay though - I think its a neat concept, especially if I ever run
-into some crashes again.
+Having these tests is very imporant - if we make a change to the algorithm,
+we have to somehow verify that it really does gain performance, and not only
+on difficult ones, but also on easy ones.
 
 ## What's Next?
 
 This is what I want to add next:
 
+ * **FIX CYCLE FINDER** - as for pruning, among other things we prune for is the
+ closed cycle. I though it was written fine, but if you run some tests (especially
+ the 50x50 ones) you will quickly find that some puzzles take 20+ minutes to solve,
+ because the function responsible for finding closed cycles in the locked blocks
+ doesn't find them. This is currently priority #1.
  * **CODE ORGANIZATION** - organize the code into multiple files, and use `CMake`
  to build it. This would improve the visibility/organization, and would make making
  changes a much less painstaking process.
- * **AUTOMATED TESTS** - set up a script, that will test a folder full of puzzles.
- This will be useful for testing optimization.
  * **IMPROVE HEURISTICS** - once the tests are properly set up, then I will begin
  testing what heuristic to implement. You can see this currently around line 2740
  in the `main.cpp` file - I have already been playing around with some strategies.
  * **ADD MULTITHREADING** - In order to improve the times, it would be nice to add
  multithreading somehow, although I don't yet know how to tackle that.
-
-> Note: automated tests have been added. Just run the tests like this:
->
-> ```
-> wiktor in ~/Desktop/pipes on main ● ● λ ./run_tests.sh tests/25x25suite
->successfully ran tests/25x25suite/1 in 363 seconds.
->successfully ran tests/25x25suite/2 in 306 seconds.
->successfully ran tests/25x25suite/3 in 270 seconds.
->successfully ran tests/25x25suite/4 in 238 seconds.
->successfully ran tests/25x25suite/5 in 2673 seconds.
->successfully ran tests/25x25suite/6 in 474 seconds.
->successfully ran tests/25x25suite/7 in 548 seconds.
->successfully ran tests/25x25suite/8 in 228 seconds.
->successfully ran tests/25x25suite/9 in 1168 seconds.
->Ran 9 number of tests.
->Average time per test: 696
->wiktor in ~/Desktop/pipes on main ● ● λ 
-> ```
-> Now the improving of the algorithm can begin :exclamation: :exclamation:
-> (I really dont want to deal with :japanese_goblin: `Cmake` :japanese_goblin: for now)

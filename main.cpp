@@ -83,7 +83,7 @@ struct block {
 
 };
 
-void writeCurrentPuzzleToFile(const std::string& filePath, block** game, int n, int m) {
+void writeCurrentPuzzleToFile(std::string& filePath, block** game, int n, int m) {
     std::ofstream outFile(filePath); // Open the file in write mode
     if (!outFile.is_open()) {
         std::cout << "Error opening the file for writing." << std::endl;
@@ -2606,6 +2606,25 @@ bool isThereACycleInTheLockedBlocks(block** game, int n, int m, sf::RenderWindow
 
 bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs, bool doWeRender, std::vector<int>& recursionInfo, int& depthOfRecursion, int& timesBrokenEarlyBecauseOfCycle, bool doWeDisplayInfo) {
 
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if ((event.type == sf::Event::Closed) || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::O)) {
+            
+            std::cout << "press O again to continue...\n";
+            bool doWeContinue = true;
+            while (doWeContinue) {
+                sf::Event anotherEvent;
+                while (window.pollEvent(anotherEvent)) {
+                    if ((anotherEvent.type == sf::Event::Closed) || (anotherEvent.type == sf::Event::KeyPressed && anotherEvent.key.code == sf::Keyboard::O)) {
+                        std::cout << "you pressed O again, continuing...\n";
+                        doWeContinue = false;
+                    }
+                }
+            }
+
+        }
+    }
+
     depthOfRecursion++;
     while (depthOfRecursion>recursionInfo.size()) {
         recursionInfo.push_back(0);
@@ -3148,8 +3167,10 @@ int main(int argc, char* argv[]) {
     }
 
     //choose the origin point of water flow
-    int waterOriginX = std::rand()%n;
-    int waterOriginY = std::rand()%m;
+    // int waterOriginX = std::rand()%n;
+    // int waterOriginY = std::rand()%m;
+    int waterOriginX = n-2;
+    int waterOriginY = m-25;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -3291,13 +3312,76 @@ int main(int argc, char* argv[]) {
                 std::cout << "finished because state is: " << state << "\n";
                 std::cout << "dumb solve done...\n";
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::V) {
-                // std::cout << "choosing the square we will backtrack on...\n";
-                // int chosenX, chosenY;
-                // chooseBacktrackingSquare(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, chosenX, chosenY);
-                // std::cout << "we will start backtracking on " << chosenX << " " << chosenY << "\n";
+                int currentTest = 0;
+                int howManySoFar = 0;
+                int timeAboveWillGetSaved = 0;
+                int howManyToSave = 0;
+
+                std::cout << "enter how many puzzles to save (less than 1000):\n";
+                std::cin >> howManyToSave;
+                if (howManyToSave>1000) {
+                    std::cout << "you entered too much, aborting!\n\n\n";
+                    return -1;
+                }
+                std::cout << "save puzzles that take longer than this to solve in ms:\n";
+                std::cin >> timeAboveWillGetSaved;
+
+                while (howManySoFar < howManyToSave) {
+                    primsGenerator(game, n, m);
+                    waterOriginX = std::rand()%n;
+                    waterOriginY = std::rand()%m;
+
+                    recursionInfo.clear();
+
+                    depthOfRecursion = 0;
+                    recursionInfo.clear();
+                    timesBrokenEarlyBecauseOfCycle = 0;
+                    
+                    auto start = std::chrono::steady_clock::now();
+                    int solution[200][200];
+                    for (int a=0; a<200; a++) {
+                        for (int b=0; b<200; b++) {
+                            solution[a][b] = 0;
+                        }
+                    }
+                    backtrackingSolver(game, n, m, solution, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs, 0, recursionInfo, depthOfRecursion, timesBrokenEarlyBecauseOfCycle, doWeDisplayInfo);
+                    for (int a=0; a<n; a++) {
+                        for (int b=0; b<m; b++) {
+                            game[a][b].rotation = solution[a][b];
+                            game[a][b].locked = true;
+                        }
+                    }
+                    auto end = std::chrono::steady_clock::now();
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+                    
+                    //draw and handle the statistics
+                    draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, doWeDisplayInfo, -1);
+
+                    std::cout << "ran test nr " << currentTest << " in " << duration << " ms\n";
+
+                    if (duration>timeAboveWillGetSaved) {
+                        std::cout << "SAVED test " << howManySoFar << " out of " << howManyToSave << "\n";
+                        std::cout << "it took " << duration << " ms\n\n\n";
+                        std::string puzzlePath = "tests/random/";
+                        if (howManySoFar<10) {
+                            puzzlePath += "00";
+                        } else if (howManySoFar<100) {
+                            puzzlePath += "0";
+                        }
+                        puzzlePath += std::to_string(howManySoFar);
+                        writeCurrentPuzzleToFile(puzzlePath, game, n, m);
+                        howManySoFar++;
+                    }
+
+                    currentTest++;
+
+                }
+                std::cout << "tests done!\n";
+                std::cout << "took " << currentTest << " tests to get " << howManySoFar << " puzzles\n";
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::W) {
                 std::cout << "Writing current puzzle to puzzle.txt...\n";
-                writeCurrentPuzzleToFile("puzzle.txt" ,game, n, m);
+                std::string puzzle = "puzzle.txt";
+                writeCurrentPuzzleToFile(puzzle ,game, n, m);
             } else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
                 std::cout << "Reading puzzle from puzzle.txt...\n";
                 readPuzzleFromFile("puzzle.txt", game, n, m);
@@ -3305,6 +3389,11 @@ int main(int argc, char* argv[]) {
                 std::cout << "input the number of tests you want to conduct...\n";
                 int numberOfTests;
                 std::cin >> numberOfTests;
+
+                if (numberOfTests<10) {
+                    std::cout << "Needs to be more than 9, aborting\n";
+                    return -1;
+                }
 
                 int totalDuration = 0;
                 int longestDuration = 0;
@@ -3319,7 +3408,8 @@ int main(int argc, char* argv[]) {
 
                     //before we solve it, remember - it might crash the computer, so save it first,
                     //so that later we can find out why it crashed.
-                    writeCurrentPuzzleToFile("latest_puzzle.txt", game, n, m);
+                    std::string latest_puzzle = "latest_puzzle.txt";
+                    writeCurrentPuzzleToFile(latest_puzzle, game, n, m);
 
                     //solve it
                     recursionInfo.clear();
@@ -3350,7 +3440,8 @@ int main(int argc, char* argv[]) {
                     totalDuration += duration;
                     if (duration>longestDuration) {
                         //we have a new game, that took the longest to solve
-                        writeCurrentPuzzleToFile("puzzle.txt" ,game, n, m);
+                        std::string puzzle = "puzzle.txt";
+                        writeCurrentPuzzleToFile(puzzle, game, n, m);
                         longestDuration = duration;
                     }
 
