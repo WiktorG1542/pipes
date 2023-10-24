@@ -1016,6 +1016,231 @@ void activityOfThisBlock(block** game, int n, int m, int x, int y) {
     return;
 }
 
+void activateWaterOnlyOnLockedBlocks(block** game, int n, int m, int x, int y) {
+
+    if (game[x][y].active==true) {
+        return;
+    }
+
+    if (game[x][y].locked==false) {
+        return;
+    }
+    game[x][y].active = 1;
+
+    bool canWeActivateUp = false;
+    bool canWeActivateDown = false;
+    bool canWeActivateLeft = false;
+    bool canWeActivateRight = false;
+
+    //checking whether we can activate up
+    if (y-1>=0) {
+        if (game[x][y-1].blob && game[x][y-1].rotation==1) {
+            // std::cout << "and we did it here\n";
+            canWeActivateUp = true;
+        }
+        if (game[x][y-1].straight && (game[x][y-1].rotation%2==1)) {
+            canWeActivateUp = true;
+        }
+        if (game[x][y-1].Tshape && game[x][y-1].rotation!=0) {
+            canWeActivateUp = true;
+        }
+        if (game[x][y-1].Lshape && (game[x][y-1].rotation==1 || game[x][y-1].rotation==2)) {
+            canWeActivateUp = true;
+        }
+
+        if (game[x][y-1].locked==0) {
+            canWeActivateUp = false;
+        }
+    }
+
+    //checking whether we can activate down
+    if (y+1<m) {
+        if (game[x][y+1].blob && game[x][y+1].rotation==3) {
+            canWeActivateDown = true;
+        }
+        if (game[x][y+1].straight && (game[x][y+1].rotation%2==1)) {
+            canWeActivateDown = true;
+        }
+        if (game[x][y+1].Tshape && game[x][y+1].rotation!=2) {
+            canWeActivateDown = true;
+        }
+        if (game[x][y+1].Lshape && (game[x][y+1].rotation==0 || game[x][y+1].rotation==3)) {
+            canWeActivateDown = true;
+        }
+
+        if (game[x][y+1].locked==0) {
+            canWeActivateDown = false;
+        }
+    }
+
+    //checking whether we can activate left
+    if (x-1>=0) {
+        if (game[x-1][y].blob && game[x-1][y].rotation==0) {
+            canWeActivateLeft = true;
+        }
+        if (game[x-1][y].straight && (game[x-1][y].rotation%2==0)) {
+            canWeActivateLeft = true;
+        }
+        if (game[x-1][y].Tshape && game[x-1][y].rotation!=3) {
+            canWeActivateLeft = true;
+        }
+        if (game[x-1][y].Lshape && (game[x-1][y].rotation==1 || game[x-1][y].rotation==0)) {
+            canWeActivateLeft = true;
+        }
+
+        if (game[x-1][y].locked==0) {
+            canWeActivateLeft = false;
+        }
+    }
+
+    //checking whether we can activate right
+    if (x+1<n) {
+        if (game[x+1][y].blob && game[x+1][y].rotation==2) {
+            canWeActivateRight = true;
+        }
+        if (game[x+1][y].straight && (game[x+1][y].rotation%2==0)) {
+            canWeActivateRight = true;
+        }
+        if (game[x+1][y].Tshape && game[x+1][y].rotation!=1) {
+            canWeActivateRight = true;
+        }
+        if (game[x+1][y].Lshape && (game[x+1][y].rotation==2 || game[x+1][y].rotation==3)) {
+            canWeActivateRight = true;
+        }
+
+        if (game[x+1][y].locked==0) {
+            canWeActivateRight = false;
+        }
+    }
+
+
+    //recursion
+    if (game[x][y].blob) {
+
+        if (game[x][y].rotation==0) {
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+        } else if (game[x][y].rotation==1) {
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+        } else if (game[x][y].rotation==2) {
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+        } else {
+            //rotation = 3
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+        }
+
+    } else if (game[x][y].Tshape) {
+
+        if (game[x][y].rotation==0) {
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+        } else if (game[x][y].rotation==1) {
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+        } else if (game[x][y].rotation==2) {
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+        } else {
+            //rotation = 3
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+            // if (canWeActivateRight) {
+            //     activateWater(game, n, m, x, y+1);
+            // }
+        }
+
+    } else if (game[x][y].straight) {
+
+        if (game[x][y].rotation%2==0) {
+            
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+
+        } else {
+
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+
+        }
+
+    } else {
+        //lshape
+        if (game[x][y].rotation==0) {
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+        } else if (game[x][y].rotation==1) {
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateRight) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            }
+        } else if (game[x][y].rotation==2) {
+            if (canWeActivateDown) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            }
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }
+        } else {
+            if (canWeActivateUp) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            }
+            if (canWeActivateLeft) {
+                activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            }          
+        }
+    }
+
+}
+
 sf::Sprite makeSprite(const sf::Texture& texture, int squareSize) {
     sf::Sprite sprite(texture);
     sprite.setScale(squareSize/8, squareSize/8);
@@ -1922,7 +2147,7 @@ void draw(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX
 
 }
 
-void drawWithoutWater(block** game, int n, int m, sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize) {
+void drawWithoutWater(block** game, int n, int m, sf::RenderWindow& window, allSprites& sprites, int squareSize) {
 
     window.clear();
 
@@ -2604,26 +2829,286 @@ bool isThereACycleInTheLockedBlocks(block** game, int n, int m, sf::RenderWindow
 
 }
 
-bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs, bool doWeRender, std::vector<int>& recursionInfo, int& depthOfRecursion, int& timesBrokenEarlyBecauseOfCycle, bool doWeDisplayInfo) {
+bool isThisLockedTshapePartOfACycle(block **game, int n, int m, int x, int y, sf::RenderWindow& window, allSprites& sprites, int squareSize) {
 
-    sf::Event event;
-    while (window.pollEvent(event)) {
-        if ((event.type == sf::Event::Closed) || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::O)) {
-            
-            std::cout << "press O again to continue...\n";
-            bool doWeContinue = true;
-            while (doWeContinue) {
-                sf::Event anotherEvent;
-                while (window.pollEvent(anotherEvent)) {
-                    if ((anotherEvent.type == sf::Event::Closed) || (anotherEvent.type == sf::Event::KeyPressed && anotherEvent.key.code == sf::Keyboard::O)) {
-                        std::cout << "you pressed O again, continuing...\n";
-                        doWeContinue = false;
-                    }
+    bool wasItLocked = false;
+    if (game[x][y].locked) {
+        wasItLocked = true;
+    }
+
+    /*game[x][y].locked &&*/
+    if (game[x][y].Tshape) {
+
+        if (game[x][y].rotation==0) {
+
+            //first unlock the tshape, so water doesnt go directly through it
+            game[x][y].locked = false;
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
                 }
+            }
+            //activate left, check right
+            activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            if (game[x+1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate up, check left
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            if (game[x-1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate up, check right
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            if (game[x+1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+
+        }
+
+        if (game[x][y].rotation==1) {
+
+            //first unlock the tshape, so water doesnt go directly through it
+            game[x][y].locked = false;
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate up, check down
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            if (game[x][y+1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate right, check up
+            activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            if (game[x][y-1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate right, check down
+            activateWaterOnlyOnLockedBlocks(game, n, m, x+1, y);
+            if (game[x][y+1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+
+        }
+
+        if (game[x][y].rotation==2) {
+
+            //first unlock the tshape, so water doesnt go directly through it
+            game[x][y].locked = false;
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate left, check right
+            activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            if (game[x+1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate down, check left
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            if (game[x-1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate down, check right
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y+1);
+            if (game[x+1][y].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
             }
 
         }
+
+        if (game[x][y].rotation==3) {
+
+            //first unlock the tshape, so water doesnt go directly through it
+            game[x][y].locked = false;
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate up, check down
+            activateWaterOnlyOnLockedBlocks(game, n, m, x, y-1);
+            if (game[x][y+1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate left, check up
+            activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            if (game[x][y-1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                game[x][y].locked = true;
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }                
+                return true;
+            }
+
+            //reset activity
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    game[a][b].active = false;
+                }
+            }
+            //activate left, check down
+            activateWaterOnlyOnLockedBlocks(game, n, m, x-1, y);
+            if (game[x][y+1].active) {
+                // std::cout << "WE FOUND A CYCLE IN A SMART WAY!!!\n";
+                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                if (wasItLocked) {
+                    game[x][y].locked = true;
+                }
+                return true;
+            }
+
+        }
+
     }
+
+    if (wasItLocked) {
+        game[x][y].locked = true;
+    }
+    return false;
+
+}
+
+bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::RenderWindow& window, int waterOriginX, int waterOriginY, allSprites& sprites, int squareSize, int delayMs, bool doWeRender, std::vector<int>& recursionInfo, int& depthOfRecursion, int& timesBrokenEarlyBecauseOfCycle, bool doWeDisplayInfo) {
 
     depthOfRecursion++;
     while (depthOfRecursion>recursionInfo.size()) {
@@ -2640,12 +3125,12 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
     }
 
     //check if there is a cycle, if there is then break early
-    if (isThereACycleInTheLockedBlocks(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
-        // draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
-        timesBrokenEarlyBecauseOfCycle++;
-        depthOfRecursion--;
-        return false;
-    }
+    // if (isThereACycleInTheLockedBlocks(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
+    //     // draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+    //     timesBrokenEarlyBecauseOfCycle++;
+    //     depthOfRecursion--;
+    //     return false;
+    // }
 
     bool doWeContinue = true;
 
@@ -2719,12 +3204,63 @@ bool backtrackingSolver(block** game, int n, int m, int solution[200][200], sf::
             }
 
             //check if there is a cycle, if there is then break early
-            if (isThereACycleInTheLockedBlocks(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
-                // draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
-                timesBrokenEarlyBecauseOfCycle++;
-                depthOfRecursion--;
-                return false;
+            // if (isThereACycleInTheLockedBlocks(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize, delayMs)) {
+            //     // draw(game, n, m, window, waterOriginX, waterOriginY, sprites, squareSize);
+            //     timesBrokenEarlyBecauseOfCycle++;
+            //     depthOfRecursion--;
+            //     return false;
+            // }
+
+            //check for cycles in tshapes
+            for (int a=0; a<n; a++) {
+                for (int b=0; b<m; b++) {
+                    /*game[a][b].locked &&*/ 
+                    if (game[a][b].Tshape) {
+                        bool result = isThisLockedTshapePartOfACycle(game, n, m, a, b, window, sprites, squareSize);
+                        if (result) {
+                            timesBrokenEarlyBecauseOfCycle++;
+                            depthOfRecursion--;
+
+                            // std::cout << "we found a cycle with the new method, it is here\n";
+                            // std::cout << a << ", " << b << "\n";
+                            // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                            // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+                            // int debugInt;
+                            // std::cout << "enter debug int!!!\n";
+                            // std::cin >> debugInt;
+                            return false;
+                        } else {
+
+                            if ((a==14 || a==15) && (b==20 || b==21)) {
+                                // std::cout << "no problem with this:\n";
+                                // drawWithoutWater(game, n, m, window, sprites, squareSize);
+                                // std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+                            }
+
+                        }
+                    }
+                }
             }
+
+            sf::Event event;
+            while (window.pollEvent(event)) {
+                if ((event.type == sf::Event::Closed) || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::O)) {
+                    
+                    std::cout << "there should be NO CYCLES here...\n";
+                    bool doWeContinue = true;
+                    while (doWeContinue) {
+                        sf::Event anotherEvent;
+                        while (window.pollEvent(anotherEvent)) {
+                            if ((anotherEvent.type == sf::Event::Closed) || (anotherEvent.type == sf::Event::KeyPressed && anotherEvent.key.code == sf::Keyboard::O)) {
+                                // std::cout << "you pressed O again, continuing...\n";
+                                doWeContinue = false;
+                            }
+                        }
+                    }
+
+                }
+            }
+
 
             //reset water
             for (int a=0; a<n; a++) {
@@ -3082,8 +3618,8 @@ int main(int argc, char* argv[]) {
         }
 
         //choose the origin point of water flow
-        int waterOriginX = std::rand()%n;
-        int waterOriginY = std::rand()%m;
+        int waterOriginX = 0;
+        int waterOriginY = 0;
 
         readPuzzleFromFile(pathToPuzzle, game, n, m);
 
@@ -3169,8 +3705,8 @@ int main(int argc, char* argv[]) {
     //choose the origin point of water flow
     // int waterOriginX = std::rand()%n;
     // int waterOriginY = std::rand()%m;
-    int waterOriginX = n-2;
-    int waterOriginY = m-25;
+    int waterOriginX = 0;
+    int waterOriginY = 0;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -3192,11 +3728,11 @@ int main(int argc, char* argv[]) {
                     if (game[a][b].locked==false) {
                         rotate(game, a, b);
                     }
-                    // activationHelper(game, n, m, a, b);
-                    // std::cout << "the block you just clicked at: ("<<a<<", "<<b<<") has a rotation of: " << game[a][b].rotation << "\n";
-                    // if (game[a][b].blob) {
-                    //     canWeRunBlobLogic(game, n, m, a, b);
-                    // }
+                    activationHelper(game, n, m, a, b);
+                    std::cout << "the block you just clicked at: ("<<a<<", "<<b<<") has a rotation of: " << game[a][b].rotation << "\n";
+                    if (game[a][b].blob) {
+                        canWeRunBlobLogic(game, n, m, a, b);
+                    }
                 }
                 
             } else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Right) {
