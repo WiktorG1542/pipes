@@ -45,9 +45,9 @@ class PipesCsvDataset(InMemoryDataset):
 
         data_list = []
         for _, row in df.iterrows():
-            W, H  = map(int, row.shape.split("x"))
-            uns   = row.unsolved.strip()
-            sol   = list(map(int, row.solved.split(",")))
+            W, H  = map(int, row["shape"].split("x"))
+            uns   = row["unsolved"].strip()
+            sol   = list(map(int, row["solved"].split(",")))
 
             x_lst, y_lst = [], []
             for i in range(W*H):
