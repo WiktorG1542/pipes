@@ -2867,6 +2867,47 @@ int highestAverageOfTen(std::vector<int> times) {
     return highestAverage/10;
 }
 
+std::string tileLetter(const block& b)
+{
+    if (b.blob)     return "b";
+    if (b.straight) return "s";
+    if (b.Lshape)   return "l";
+    return "t";
+}
+
+char rotDigit(const block& b)
+{
+    switch (b.rotation) {
+        case 0: case 'n': return '0';
+        case 1: case 'e': return '1';
+        case 2: case 's': return '2';
+        case 3: case 'w': return '3';
+        default:           return '0';
+    }
+}
+
+std::string encodePuzzle(block** g, int n, int m) {
+    std::string out;  out.reserve(2*n*m);
+    for (int r=0; r<m; ++r)
+        for (int c=0; c<n; ++c)
+        {
+            out += tileLetter(g[c][r]);
+            out += rotDigit   (g[c][r]);
+        }
+    return out;
+}
+
+std::string encodeSolution(int sol[200][200], int n, int m) {
+    std::string out;
+    for (int r=0; r<m; ++r)
+        for (int c=0; c<n; ++c)
+        {
+            out += std::to_string(sol[c][r]);
+            if (!(r==m-1 && c==n-1)) out += ',';
+        }
+    return out;
+}
+
 int main(int argc, char* argv[]) {
 
     int squareSize;
@@ -3119,6 +3160,38 @@ int main(int argc, char* argv[]) {
         draw(game, n, m, window, waterOriginX, waterOriginY, sprites, 8, 0, depthOfRecursion);
 
         std::cout << duration << std::endl;
+
+        return 0;
+    }
+
+    if (argc==4 && std::string(argv[1])=="FASTCSV")
+    {
+        int n = std::stoi(argv[2]);
+        int m = std::stoi(argv[3]);
+        int squareSize=8;
+
+        block** game = new block*[n];
+        for (int i=0;i<n;++i) game[i]=new block[m];
+
+        primsGenerator(game,n,m);
+        int waterOriginX = std::rand()%n;
+        int waterOriginY = std::rand()%m;
+
+        std::string unsolved = encodePuzzle(game,n,m);
+
+        int solution[200][200] = {{0}};
+        sf::RenderWindow dummy;
+        std::vector<int> rec; int depth=0, cycles=0;
+        backtrackingSolver(game,n,m,solution,dummy,
+                        waterOriginX,waterOriginY,
+                        sprites, squareSize, 0,
+                        /*render=*/false, rec, depth, cycles,
+                        /*displayInfo=*/false);
+
+        std::string solved = encodeSolution(solution,n,m);
+        std::string shape  = std::to_string(n)+"x"+std::to_string(m);
+
+        std::cout << unsolved << ",\"" << solved << "\"," << shape << "\n";
 
         return 0;
     }
